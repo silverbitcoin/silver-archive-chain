@@ -10,7 +10,6 @@
 use crate::types::MerkleProof;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, trace};
 
 /// Merkle tree node
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
