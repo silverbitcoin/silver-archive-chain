@@ -17,18 +17,7 @@ pub async fn query_by_address(
     let mut results = Vec::new();
     for tx in transactions {
         // Retrieve Merkle proof from storage
-        let proof = match storage.get_merkle_proof(&tx.hash).await {
-            Ok(p) => p,
-            Err(_) => {
-                // If proof not found, create placeholder
-                MerkleProof {
-                    tx_hash: tx.hash,
-                    path: vec![],
-                    position: 0,
-                    root: [0u8; 64],
-                }
-            }
-        };
+        let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
         results.push((tx, proof));
     }
 
@@ -43,19 +32,8 @@ pub async fn query_by_hash(
     debug!("Querying transaction: {}", tx_hash);
     let tx = storage.get_transaction(tx_hash).await?;
 
-    // Retrieve Merkle proof from storage
-    let proof = match storage.get_merkle_proof(&tx.hash).await {
-        Ok(p) => p,
-        Err(_) => {
-            // If proof not found, create placeholder
-            MerkleProof {
-                tx_hash: tx.hash,
-                path: vec![],
-                position: 0,
-                root: [0u8; 64],
-            }
-        }
-    };
+    // Retrieve or generate Merkle proof
+    let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
 
     Ok((tx, proof))
 }
@@ -77,17 +55,7 @@ pub async fn query_by_time_range(
 
     let mut results = Vec::new();
     for tx in transactions {
-        let proof = match storage.get_merkle_proof(&tx.hash).await {
-            Ok(p) => p,
-            Err(_) => {
-                // If proof not found, create placeholder
-                MerkleProof {
-                    tx_hash: tx.hash,
-                    path: vec![],
-                    position: 0,
-                    root: [0u8; 64],
-                }
-            }
+        let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
         };
         results.push((tx, proof));
     }
