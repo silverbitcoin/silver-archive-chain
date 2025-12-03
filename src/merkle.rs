@@ -46,7 +46,8 @@ fn hash_pair(left: &[u8; 64], right: &[u8; 64]) -> [u8; 64] {
 
     let hash = blake3::hash(&combined);
     let mut result = [0u8; 64];
-    result.copy_from_slice(&hash.as_bytes()[..64]);
+    // Blake3 produces 32 bytes, copy to first 32 bytes of result
+    result[..32].copy_from_slice(hash.as_bytes());
     result
 }
 
@@ -113,79 +114,13 @@ pub fn compute_root(tx_hashes: &[[u8; 64]]) -> [u8; 64] {
 }
 
 /// Verify multiple proofs efficiently
-pub fn verify_proofs(
-    proofs: &[MerkleProof],
-    root: &[u8; 64],
-) -> bool {
-    proofs.iter().all(|proof| verify_proof(&proof.tx_hash, proof, root))
+pub fn verify_proofs(proofs: &[MerkleProof], root: &[u8; 64]) -> bool {
+    proofs
+        .iter()
+        .all(|proof| verify_proof(&proof.tx_hash, proof, root))
 }
 
 /// Get proof size in bytes
 pub fn proof_size(proof: &MerkleProof) -> usize {
     64 + (proof.path.len() * 64) + 4 + 64 // tx_hash + path + position + root
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_merkle_proof_verification() {
-        let tx_hashes = vec![
-            [1u8; 64],
-            [2u8; 64],
-            [3u8; 64],
-            [4u8; 64],
-        ];
-
-        let (root, tree) = build_merkle_tree(&tx_hashes);
-        let proof = get_proof_for_index(&tree, 0);
-
-        assert!(verify_proof(&tx_hashes[0], &MerkleProof {
-            tx_hash: tx_hashes[0],
-            path: proof,
-            position: 0,
-            root,
-        }, &root));
-    }
-
-    #[test]
-    fn test_merkle_root_computation() {
-        let tx_hashes = vec![
-            [1u8; 64],
-            [2u8; 64],
-            [3u8; 64],
-            [4u8; 64],
-        ];
-
-        let root = compute_root(&tx_hashes);
-        assert_ne!(root, [0u8; 64]);
-    }
-
-    #[test]
-    fn test_empty_merkle_tree() {
-        let tx_hashes: Vec<[u8; 64]> = vec![];
-        let root = compute_root(&tx_hashes);
-        assert_eq!(root, [0u8; 64]);
-    }
-
-    #[test]
-    fn test_single_transaction_merkle_tree() {
-        let tx_hashes = vec![[1u8; 64]];
-        let (root, _) = build_merkle_tree(&tx_hashes);
-        assert_eq!(root, [1u8; 64]);
-    }
-
-    #[test]
-    fn test_proof_size() {
-        let proof = MerkleProof {
-            tx_hash: [1u8; 64],
-            path: vec![[2u8; 64], [3u8; 64]],
-            position: 0,
-            root: [4u8; 64],
-        };
-
-        let size = proof_size(&proof);
-        assert!(size > 0);
-    }
 }

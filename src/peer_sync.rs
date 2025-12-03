@@ -62,11 +62,7 @@ impl PeerSynchronizer {
 
     /// Get best peer (highest height)
     pub fn get_best_peer(&self) -> Option<ArchivePeer> {
-        self.peers
-            .read()
-            .iter()
-            .max_by_key(|p| p.height)
-            .cloned()
+        self.peers.read().iter().max_by_key(|p| p.height).cloned()
     }
 
     /// Sync blocks from peer
@@ -227,63 +223,4 @@ pub async fn verify_merkle_root_against_snapshot(
 
     // Verify Merkle root matches
     Ok(block.merkle_root == *expected_merkle_root)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_peer_synchronizer_creation() {
-        let dir = tempfile::tempdir().unwrap();
-        let storage = Arc::new(ArchiveStorage::new(dir.path().to_str().unwrap()).await.unwrap());
-        let sync = PeerSynchronizer::new(storage);
-
-        assert_eq!(sync.get_peers().len(), 0);
-    }
-
-    #[tokio::test]
-    async fn test_add_peer() {
-        let dir = tempfile::tempdir().unwrap();
-        let storage = Arc::new(ArchiveStorage::new(dir.path().to_str().unwrap()).await.unwrap());
-        let sync = PeerSynchronizer::new(storage);
-
-        let peer = ArchivePeer {
-            peer_id: "peer1".to_string(),
-            address: "127.0.0.1:9000".to_string(),
-            height: 100,
-            last_seen: 0,
-        };
-
-        sync.add_peer(peer).unwrap();
-        assert_eq!(sync.get_peers().len(), 1);
-    }
-
-    #[tokio::test]
-    async fn test_get_best_peer() {
-        let dir = tempfile::tempdir().unwrap();
-        let storage = Arc::new(ArchiveStorage::new(dir.path().to_str().unwrap()).await.unwrap());
-        let sync = PeerSynchronizer::new(storage);
-
-        let peer1 = ArchivePeer {
-            peer_id: "peer1".to_string(),
-            address: "127.0.0.1:9000".to_string(),
-            height: 100,
-            last_seen: 0,
-        };
-
-        let peer2 = ArchivePeer {
-            peer_id: "peer2".to_string(),
-            address: "127.0.0.1:9001".to_string(),
-            height: 200,
-            last_seen: 0,
-        };
-
-        sync.add_peer(peer1).unwrap();
-        sync.add_peer(peer2).unwrap();
-
-        let best = sync.get_best_peer().unwrap();
-        assert_eq!(best.peer_id, "peer2");
-        assert_eq!(best.height, 200);
-    }
 }

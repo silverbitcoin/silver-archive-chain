@@ -2,7 +2,7 @@
 
 use crate::error::{ArchiveChainError, Result};
 use crate::types::{ArchiveBlock, ArchiveTransaction};
-use rocksdb::{DB, Options, IteratorMode};
+use rocksdb::{IteratorMode, Options, DB};
 use std::path::Path;
 use tracing::{debug, info};
 
@@ -25,8 +25,8 @@ impl ArchiveStorage {
         opts.set_write_buffer_size(64 * 1024 * 1024); // 64MB
         opts.set_max_write_buffer_number(3);
 
-        let db = DB::open(&opts, db_path)
-            .map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
+        let db =
+            DB::open(&opts, db_path).map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
 
         info!("Archive Storage initialized at {}", db_path);
 
@@ -79,7 +79,10 @@ impl ArchiveStorage {
         let prefix = format!("sender:{}:", sender);
         let mut transactions = Vec::new();
 
-        let iter = self.db.iterator(IteratorMode::From(prefix.as_bytes(), rocksdb::Direction::Forward));
+        let iter = self.db.iterator(IteratorMode::From(
+            prefix.as_bytes(),
+            rocksdb::Direction::Forward,
+        ));
 
         for result in iter {
             let (key, _) = result.map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
@@ -112,7 +115,10 @@ impl ArchiveStorage {
         let prefix = format!("time:");
         let mut transactions = Vec::new();
 
-        let iter = self.db.iterator(IteratorMode::From(prefix.as_bytes(), rocksdb::Direction::Forward));
+        let iter = self.db.iterator(IteratorMode::From(
+            prefix.as_bytes(),
+            rocksdb::Direction::Forward,
+        ));
 
         for result in iter {
             let (key, _) = result.map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
@@ -168,7 +174,9 @@ impl ArchiveStorage {
             .db
             .get(key.as_bytes())
             .map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?
-            .ok_or_else(|| ArchiveChainError::InvalidBlock(format!("Block {} not found", block_number)))?;
+            .ok_or_else(|| {
+                ArchiveChainError::InvalidBlock(format!("Block {} not found", block_number))
+            })?;
 
         serde_json::from_slice(&value).map_err(|e| ArchiveChainError::SerializationError(e))
     }
@@ -202,15 +210,15 @@ impl ArchiveStorage {
             .put(key.as_bytes(), &value)
             .map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
 
-        debug!("Stored Merkle proof for transaction: {}", hex::encode(tx_hash));
+        debug!(
+            "Stored Merkle proof for transaction: {}",
+            hex::encode(tx_hash)
+        );
         Ok(())
     }
 
     /// Get Merkle proof
-    pub async fn get_merkle_proof(
-        &self,
-        tx_hash: &[u8; 64],
-    ) -> Result<crate::types::MerkleProof> {
+    pub async fn get_merkle_proof(&self, tx_hash: &[u8; 64]) -> Result<crate::types::MerkleProof> {
         let key = format!("proof:{}", hex::encode(tx_hash));
         let value = self
             .db
@@ -227,7 +235,10 @@ impl ArchiveStorage {
     }
 
     /// Get all transactions in a block
-    pub async fn get_block_transactions(&self, block_number: u64) -> Result<Vec<ArchiveTransaction>> {
+    pub async fn get_block_transactions(
+        &self,
+        block_number: u64,
+    ) -> Result<Vec<ArchiveTransaction>> {
         let block = self.get_block(block_number).await?;
         Ok(block.transactions)
     }
@@ -237,7 +248,10 @@ impl ArchiveStorage {
         let prefix = "tx:";
         let mut count = 0u64;
 
-        let iter = self.db.iterator(IteratorMode::From(prefix.as_bytes(), rocksdb::Direction::Forward));
+        let iter = self.db.iterator(IteratorMode::From(
+            prefix.as_bytes(),
+            rocksdb::Direction::Forward,
+        ));
 
         for result in iter {
             let (key, _) = result.map_err(|e| ArchiveChainError::RocksDBError(e.to_string()))?;
@@ -260,8 +274,7 @@ impl ArchiveStorage {
 
     /// Compact database
     pub async fn compact(&self) -> Result<()> {
-        self.db
-            .compact_range(None::<&[u8]>, None::<&[u8]>);
+        self.db.compact_range(None::<&[u8]>, None::<&[u8]>);
         Ok(())
     }
 }

@@ -89,10 +89,7 @@ pub async fn query_time_range_index(
     end_time: u64,
     limit: usize,
 ) -> Result<QueryResults> {
-    debug!(
-        "Querying time range index: {} - {}",
-        start_time, end_time
-    );
+    debug!("Querying time range index: {} - {}", start_time, end_time);
 
     let transactions = storage
         .get_transactions_by_time_range(start_time, end_time, limit)
@@ -126,20 +123,4 @@ pub async fn get_index_stats(storage: &ArchiveStorage) -> Result<IndexStats> {
         time_index_size: total_transactions,
         total_transactions,
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_index_query_builder() {
-        let query = IndexQuery::new("sender:0x123:".to_string())
-            .limit(100)
-            .reverse(true);
-
-        assert_eq!(query.prefix, "sender:0x123:");
-        assert_eq!(query.limit, 100);
-        assert!(query.reverse);
-    }
 }

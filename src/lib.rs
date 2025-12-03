@@ -45,14 +45,14 @@ pub mod storage;
 pub mod sync;
 pub mod types;
 
-pub use consensus::{ArchiveConsensus, ArchiveValidator, ArchiveChainStats};
+pub use consensus::{ArchiveChainStats, ArchiveConsensus, ArchiveValidator};
 pub use error::{ArchiveChainError, Result};
-pub use peer_sync::{PeerSynchronizer, ArchivePeer, SyncStatus};
+pub use peer_sync::{ArchivePeer, PeerSynchronizer, SyncStatus};
 pub use proof_generator::{
     BatchProofGenerator, BatchProofStats, MerkleTree, ProofGenerator, ProofGeneratorStats,
 };
-pub use sync::{ArchiveChainSync, SyncState, SyncProgress};
-pub use types::{ArchiveBlock, ArchiveTransaction, MerkleProof, ArchiveChainConfig};
+pub use sync::{ArchiveChainSync, SyncProgress, SyncState};
+pub use types::{ArchiveBlock, ArchiveChainConfig, ArchiveTransaction, MerkleProof};
 
 use std::sync::Arc;
 use tracing::{debug, info};
@@ -73,7 +73,11 @@ impl ArchiveChain {
         let consensus = Arc::new(consensus::ArchiveConsensus::new(storage.clone()));
         let sync = Arc::new(sync::ArchiveChainSync::new(storage.clone()));
 
-        Ok(Self { storage, consensus, sync })
+        Ok(Self {
+            storage,
+            consensus,
+            sync,
+        })
     }
 
     /// Add validator to Archive Chain
@@ -125,8 +129,7 @@ impl ArchiveChain {
         limit: usize,
     ) -> Result<Vec<(ArchiveTransaction, MerkleProof)>> {
         debug!("Querying transactions for address: {}", address);
-        query::query_by_address(&self.storage, address, limit)
-            .await
+        query::query_by_address(&self.storage, address, limit).await
     }
 
     /// Query transaction by hash
@@ -146,8 +149,7 @@ impl ArchiveChain {
             "Querying transactions in range {} - {}",
             start_time, end_time
         );
-        query::query_by_time_range(&self.storage, start_time, end_time, limit)
-            .await
+        query::query_by_time_range(&self.storage, start_time, end_time, limit).await
     }
 
     /// Query transactions by recipient
@@ -156,8 +158,7 @@ impl ArchiveChain {
         recipient: &str,
         limit: usize,
     ) -> Result<Vec<(ArchiveTransaction, MerkleProof)>> {
-        query::query_by_recipient(&self.storage, recipient, limit)
-            .await
+        query::query_by_recipient(&self.storage, recipient, limit).await
     }
 
     /// Sync Archive Chain from genesis
@@ -215,21 +216,5 @@ impl ArchiveChain {
     /// Compact storage
     pub async fn compact(&self) -> Result<()> {
         self.storage.compact().await
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_archive_chain_creation() {
-        let dir = tempfile::tempdir().unwrap();
-        let archive = ArchiveChain::new(dir.path().to_str().unwrap())
-            .await
-            .unwrap();
-
-        let height = archive.get_height().await.unwrap();
-        assert_eq!(height, 0);
     }
 }

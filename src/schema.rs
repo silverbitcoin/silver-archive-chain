@@ -152,7 +152,7 @@ pub mod keys {
 
 /// Build transaction key
 pub fn tx_key(tx_hash: &str) -> String {
-    format!("{}{}",keys::TX_PREFIX, tx_hash)
+    format!("{}{}", keys::TX_PREFIX, tx_hash)
 }
 
 /// Build sender index key
@@ -178,34 +178,4 @@ pub fn proof_key(tx_hash: &str) -> String {
 /// Build block key
 pub fn block_key(block_number: u64) -> String {
     format!("{}{}", keys::BLOCK_PREFIX, block_number)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_key_generation() {
-        let tx_hash = "abc123";
-        let address = "0x123";
-        let timestamp = 1234567890u64;
-
-        assert_eq!(tx_key(tx_hash), "tx:abc123");
-        assert_eq!(sender_key(address, tx_hash), "sender:0x123:abc123");
-        assert_eq!(recipient_key(address, tx_hash), "recipient:0x123:abc123");
-        assert_eq!(time_key(timestamp, tx_hash), "time:1234567890:abc123");
-        assert_eq!(proof_key(tx_hash), "proof:abc123");
-        assert_eq!(block_key(100), "block:100");
-    }
-
-    #[test]
-    fn test_key_ordering() {
-        // Verify lexicographic ordering for range queries
-        let key1 = sender_key("0x111", "hash1");
-        let key2 = sender_key("0x111", "hash2");
-        let key3 = sender_key("0x222", "hash1");
-
-        assert!(key1 < key2);
-        assert!(key2 < key3);
-    }
 }

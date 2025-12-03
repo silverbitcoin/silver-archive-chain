@@ -175,9 +175,7 @@ impl ArchiveConsensus {
         // 3 TPS * 480ms = ~1440 transactions per block
         let max_per_block = (self.target_tps as u64 * self.snapshot_interval_ms / 1000) as usize;
         if pending.len() >= max_per_block {
-            return Err(ArchiveChainError::Unknown(
-                "Block is full".to_string(),
-            ));
+            return Err(ArchiveChainError::Unknown("Block is full".to_string()));
         }
 
         pending.push(tx);
@@ -206,7 +204,8 @@ impl ArchiveConsensus {
         // In production, this would verify actual signatures and sum their stake
         // For now, we check if we have enough signatures
         let required_stake = (total_stake * 2) / 3;
-        let signature_stake = (num_signatures as u64) * (total_stake / validators.len().max(1) as u64);
+        let signature_stake =
+            (num_signatures as u64) * (total_stake / validators.len().max(1) as u64);
 
         signature_stake >= required_stake
     }

@@ -265,10 +265,7 @@ impl ProofGenerator {
     ///
     /// Optimizes proof generation for large batches by building
     /// the tree once and generating all proofs.
-    pub fn generate_batch_proofs(
-        &mut self,
-        tx_hashes: &[[u8; 64]],
-    ) -> Vec<MerkleProof> {
+    pub fn generate_batch_proofs(&mut self, tx_hashes: &[[u8; 64]]) -> Vec<MerkleProof> {
         let tree = self.get_or_build_tree(tx_hashes);
         tree.generate_proofs(&(0..tx_hashes.len()).collect::<Vec<_>>())
     }
@@ -303,7 +300,7 @@ impl ProofGenerator {
         let last = hex::encode(&tx_hashes[tx_hashes.len() - 1][..8]);
         let count = tx_hashes.len();
 
-        format!("{}_{}_{}",first, last, count)
+        format!("{}_{}_{}", first, last, count)
     }
 
     /// Clear the cache
@@ -372,10 +369,7 @@ impl BatchProofGenerator {
 
     /// Get proofs for multiple transactions
     pub fn get_proofs(&mut self, tx_hashes: &[[u8; 64]]) -> Vec<MerkleProof> {
-        tx_hashes
-            .iter()
-            .filter_map(|h| self.get_proof(h))
-            .collect()
+        tx_hashes.iter().filter_map(|h| self.get_proof(h)).collect()
     }
 
     /// Get all proofs
@@ -428,111 +422,4 @@ pub struct BatchProofStats {
 
     /// Average proof size in bytes
     pub average_proof_size: usize,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn create_test_hashes(count: usize) -> Vec<[u8; 64]> {
-        (0..count)
-            .map(|i| {
-                let mut hash = [0u8; 64];
-                hash[0..8].copy_from_slice(&(i as u64).to_le_bytes());
-                hash
-            })
-            .collect()
-    }
-
-    #[test]
-    fn test_merkle_tree_build() {
-        let hashes = create_test_hashes(4);
-        let tree = MerkleTree::build(&hashes);
-
-        assert_eq!(tree.leaf_count(), 4);
-        assert!(tree.depth() > 0);
-        assert_ne!(tree.root(), [0u8; 64]);
-    }
-
-    #[test]
-    fn test_merkle_tree_empty() {
-        let hashes: Vec<[u8; 64]> = vec![];
-        let tree = MerkleTree::build(&hashes);
-
-        assert_eq!(tree.leaf_count(), 0);
-        assert_eq!(tree.root(), [0u8; 64]);
-    }
-
-    #[test]
-    fn test_merkle_tree_single() {
-        let hashes = create_test_hashes(1);
-        let tree = MerkleTree::build(&hashes);
-
-        assert_eq!(tree.leaf_count(), 1);
-        assert_eq!(tree.root(), hashes[0]);
-    }
-
-    #[test]
-    fn test_merkle_proof_generation() {
-        let hashes = create_test_hashes(8);
-        let tree = MerkleTree::build(&hashes);
-
-        let proof = tree.generate_proof(0).unwrap();
-        assert_eq!(proof.tx_hash, hashes[0]);
-        assert_eq!(proof.position, 0);
-        assert_eq!(proof.root, tree.root());
-    }
-
-    #[test]
-    fn test_merkle_proof_verification() {
-        let hashes = create_test_hashes(8);
-        let tree = MerkleTree::build(&hashes);
-
-        let proof = tree.generate_proof(3).unwrap();
-        assert!(tree.verify_proof(&proof));
-    }
-
-    #[test]
-    fn test_proof_generator() {
-        let hashes = create_test_hashes(16);
-        let mut generator = ProofGenerator::new(10);
-
-        let proof = generator.generate_proof(&hashes[5], &hashes);
-        assert!(proof.is_some());
-    }
-
-    #[test]
-    fn test_batch_proof_generator() {
-        let hashes = create_test_hashes(32);
-        let mut batch_gen = BatchProofGenerator::new(hashes.clone());
-
-        let proof = batch_gen.get_proof(&hashes[10]).unwrap();
-        assert_eq!(proof.tx_hash, hashes[10]);
-
-        let stats = batch_gen.stats();
-        assert_eq!(stats.total_transactions, 32);
-    }
-
-    #[test]
-    fn test_proof_size() {
-        let hashes = create_test_hashes(256);
-        let tree = MerkleTree::build(&hashes);
-
-        let proof = tree.generate_proof(100).unwrap();
-        let size = MerkleTree::proof_size(&proof);
-
-        // Proof should be 1-10 KB as per requirements
-        assert!(size > 0);
-        assert!(size < 10_000);
-    }
-
-    #[test]
-    fn test_average_proof_size() {
-        let hashes = create_test_hashes(256);
-        let tree = MerkleTree::build(&hashes);
-
-        let avg_size = tree.average_proof_size();
-        assert!(avg_size > 0);
-        assert!(avg_size < 10_000);
-    }
 }

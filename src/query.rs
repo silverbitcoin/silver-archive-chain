@@ -17,7 +17,7 @@ pub async fn query_by_address(
     let mut results = Vec::new();
     for tx in transactions {
         // Retrieve Merkle proof from storage
-        let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
+        let proof = storage.get_merkle_proof(&tx.hash).await?;
         results.push((tx, proof));
     }
 
@@ -33,7 +33,7 @@ pub async fn query_by_hash(
     let tx = storage.get_transaction(tx_hash).await?;
 
     // Retrieve or generate Merkle proof
-    let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
+    let proof = storage.get_merkle_proof(&tx.hash).await?;
 
     Ok((tx, proof))
 }
@@ -55,8 +55,7 @@ pub async fn query_by_time_range(
 
     let mut results = Vec::new();
     for tx in transactions {
-        let proof = storage.get_or_generate_merkle_proof(&tx.hash).await?;
-        };
+        let proof = storage.get_merkle_proof(&tx.hash).await?;
         results.push((tx, proof));
     }
 
@@ -70,7 +69,7 @@ pub async fn query_by_recipient(
     _limit: usize,
 ) -> Result<Vec<(ArchiveTransaction, MerkleProof)>> {
     debug!("Querying transactions for recipient: {}", recipient);
-    
+
     // Note: This would require an additional index in storage
     // For now, we return empty results
     Ok(vec![])

@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchiveTransaction {
     /// Transaction hash (Blake3-512) - stored as hex string for serialization
-    #[serde(serialize_with = "serialize_hash", deserialize_with = "deserialize_hash")]
+    #[serde(
+        serialize_with = "serialize_hash",
+        deserialize_with = "deserialize_hash"
+    )]
     pub hash: [u8; 64],
     /// Sender address
     pub sender: String,
@@ -28,7 +31,10 @@ pub struct ArchiveBlock {
     /// Block number (from Main Chain snapshot)
     pub block_number: u64,
     /// Merkle root from Main Chain - stored as hex string for serialization
-    #[serde(serialize_with = "serialize_hash", deserialize_with = "deserialize_hash")]
+    #[serde(
+        serialize_with = "serialize_hash",
+        deserialize_with = "deserialize_hash"
+    )]
     pub merkle_root: [u8; 64],
     /// Validator signatures (2/3+ stake)
     pub validator_signatures: Vec<Vec<u8>>,
@@ -42,15 +48,24 @@ pub struct ArchiveBlock {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MerkleProof {
     /// Transaction hash - stored as hex string for serialization
-    #[serde(serialize_with = "serialize_hash", deserialize_with = "deserialize_hash")]
+    #[serde(
+        serialize_with = "serialize_hash",
+        deserialize_with = "deserialize_hash"
+    )]
     pub tx_hash: [u8; 64],
     /// Merkle path (hashes from leaf to root) - stored as hex strings
-    #[serde(serialize_with = "serialize_hash_vec", deserialize_with = "deserialize_hash_vec")]
+    #[serde(
+        serialize_with = "serialize_hash_vec",
+        deserialize_with = "deserialize_hash_vec"
+    )]
     pub path: Vec<[u8; 64]>,
     /// Position in tree (for reconstruction)
     pub position: u32,
     /// Root hash - stored as hex string for serialization
-    #[serde(serialize_with = "serialize_hash", deserialize_with = "deserialize_hash")]
+    #[serde(
+        serialize_with = "serialize_hash",
+        deserialize_with = "deserialize_hash"
+    )]
     pub root: [u8; 64],
 }
 
@@ -138,7 +153,7 @@ impl Default for ArchiveChainConfig {
             target_tps: 3,
             snapshot_interval_ms: 480,
             max_transactions_per_block: 1440, // 3 TPS * 480ms = ~1440 tx per block
-            retention_days: 0, // Unlimited retention
+            retention_days: 0,                // Unlimited retention
         }
     }
 }
