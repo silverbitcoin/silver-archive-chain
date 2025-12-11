@@ -1,7 +1,7 @@
 //! Archive Chain indexing for efficient range queries
 //!
 //! This module provides utilities for efficient range queries on indexed data
-//! stored in RocksDB.
+//! stored in ParityDB.
 
 use crate::error::Result;
 use crate::storage::ArchiveStorage;
@@ -67,18 +67,21 @@ pub async fn query_sender_index(
 
 /// Execute recipient index query
 pub async fn query_recipient_index(
-    _storage: &ArchiveStorage,
+    storage: &ArchiveStorage,
     address: &str,
-    _limit: usize,
+    limit: usize,
 ) -> Result<QueryResults> {
     debug!("Querying recipient index for address: {}", address);
 
-    // Note: This would require an additional index in storage
-    // For now, return empty results
+    // Query recipient index from storage
+    let transactions = storage.get_transactions_by_recipient(address, limit).await?;
+    let total_count = transactions.len();
+    let has_more = total_count >= limit;
+
     Ok(QueryResults {
-        items: vec![],
-        total_count: 0,
-        has_more: false,
+        items: transactions,
+        total_count,
+        has_more,
     })
 }
 
@@ -117,10 +120,23 @@ pub struct IndexStats {
 pub async fn get_index_stats(storage: &ArchiveStorage) -> Result<IndexStats> {
     let total_transactions = storage.count_transactions().await?;
 
+    // Get recipient index size from storage
+    // This is populated by maintaining a separate index of all recipients
+    // as transactions are stored
+    let recipient_index_size = storage.count_recipient_index_entries().await?;
+    
+    // Get time index size from storage
+    // This is populated by maintaining a separate index of all transactions by timestamp
+    let time_index_size = storage.count_time_index_entries().await?;
+    
+    // Get sender index size from storage
+    // This is populated by maintaining a separate index of all transactions by sender
+    let sender_index_size = storage.count_sender_index_entries().await?;
+
     Ok(IndexStats {
-        sender_index_size: total_transactions,
-        recipient_index_size: 0, // Would be populated if recipient index exists
-        time_index_size: total_transactions,
+        sender_index_size,
+        recipient_index_size,
+        time_index_size,
         total_transactions,
     })
 }

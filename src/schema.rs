@@ -1,13 +1,13 @@
-//! Archive Chain RocksDB schema documentation
+//! Archive Chain ParityDB schema documentation
 //!
-//! This module documents the RocksDB schema used by Archive Chain for efficient
+//! This module documents the ParityDB schema used by Archive Chain for efficient
 //! storage and querying of historical transaction data.
 
-/// RocksDB Schema for Archive Chain
+/// ParityDB Schema for Archive Chain
 ///
 /// # Column Families
 ///
-/// Archive Chain uses a single RocksDB database with the following key patterns:
+/// Archive Chain uses a single ParityDB database with the following key patterns:
 ///
 /// ## Transactions
 /// - Key: `tx:{tx_hash_hex}`

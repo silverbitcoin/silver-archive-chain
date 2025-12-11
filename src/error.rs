@@ -29,8 +29,8 @@ pub enum ArchiveChainError {
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 
-    #[error("RocksDB error: {0}")]
-    RocksDBError(String),
+    #[error("ParityDB error: {0}")]
+    ParityDBError(String),
 
     #[error("Sync error: {0}")]
     SyncError(String),
@@ -48,8 +48,8 @@ pub enum ArchiveChainError {
     Unknown(String),
 }
 
-impl From<rocksdb::Error> for ArchiveChainError {
-    fn from(err: rocksdb::Error) -> Self {
-        ArchiveChainError::RocksDBError(err.to_string())
+impl From<parity_db::Error> for ArchiveChainError {
+    fn from(err: parity_db::Error) -> Self {
+        ArchiveChainError::ParityDBError(err.to_string())
     }
 }

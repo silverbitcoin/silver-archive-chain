@@ -22,7 +22,7 @@
 //! ```text
 //! Light Node Query
 //!     ↓
-//! Archive Chain RocksDB
+//! Archive Chain ParityDB
 //!     ├─ Lookup by tx hash
 //!     ├─ Generate Merkle proof
 //!     └─ Return: [transactions] + [proof]
@@ -69,7 +69,7 @@ impl ArchiveChain {
     pub async fn new(db_path: &str) -> Result<Self> {
         info!("Initializing Archive Chain at {}", db_path);
 
-        let storage = Arc::new(storage::ArchiveStorage::new(db_path).await?);
+        let storage: Arc<storage::ArchiveStorage> = Arc::new(storage::ArchiveStorage::new(db_path).await?);
         let consensus = Arc::new(consensus::ArchiveConsensus::new(storage.clone()));
         let sync = Arc::new(sync::ArchiveChainSync::new(storage.clone()));
 

@@ -64,15 +64,22 @@ pub async fn query_by_time_range(
 
 /// Query transactions by recipient
 pub async fn query_by_recipient(
-    _storage: &ArchiveStorage,
+    storage: &ArchiveStorage,
     recipient: &str,
-    _limit: usize,
+    limit: usize,
 ) -> Result<Vec<(ArchiveTransaction, MerkleProof)>> {
     debug!("Querying transactions for recipient: {}", recipient);
 
-    // Note: This would require an additional index in storage
-    // For now, we return empty results
-    Ok(vec![])
+    // Query recipient index from storage
+    let transactions = storage.get_transactions_by_recipient(recipient, limit).await?;
+    
+    let mut results = Vec::new();
+    for tx in transactions {
+        let proof = storage.get_merkle_proof(&tx.hash).await?;
+        results.push((tx, proof));
+    }
+    
+    Ok(results)
 }
 
 /// Get transaction count
